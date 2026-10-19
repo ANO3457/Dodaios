@@ -8278,7 +8278,8 @@
         "follow_busy_build": "Baue die neue Oberfläche…",
         "follow_restart_pending": "Neuer Code ist da; die App startet neu, sobald keine Mission und kein Anruf läuft.",
         "follow_updated": "Aktualisiert {when}: {subject}",
-        "follow_click_off": "Klicken, um main nicht mehr zu folgen."
+        "follow_click_off": "Klicken, um main nicht mehr zu folgen.",
+        "session_diff_badge": "Änderungen von {pane}"
       }
     },
     "skills": {

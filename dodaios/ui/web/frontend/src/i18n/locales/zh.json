@@ -8278,7 +8278,8 @@
         "follow_busy_build": "正在构建新界面…",
         "follow_restart_pending": "新代码已就绪；没有任务或通话进行时应用会自动重启。",
         "follow_updated": "{when}已更新：{subject}",
-        "follow_click_off": "点击以停止跟随 main。"
+        "follow_click_off": "点击以停止跟随 main。",
+        "session_diff_badge": "{pane} 的更改"
       }
     },
     "skills": {

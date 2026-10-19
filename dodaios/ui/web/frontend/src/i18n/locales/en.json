@@ -8278,7 +8278,8 @@
         "follow_busy_build": "Building the new interface…",
         "follow_restart_pending": "New code is in; the app restarts as soon as no mission or call is running.",
         "follow_updated": "Updated {when}: {subject}",
-        "follow_click_off": "Click to stop following main."
+        "follow_click_off": "Click to stop following main.",
+        "session_diff_badge": "Changes by {pane}"
       }
     },
     "skills": {
