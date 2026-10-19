@@ -8278,7 +8278,8 @@
         "follow_busy_build": "Construindo a nova interface…",
         "follow_restart_pending": "Há código novo; a app reinicia assim que nenhuma missão ou chamada estiver em andamento.",
         "follow_updated": "Atualizado {when}: {subject}",
-        "follow_click_off": "Clique para deixar de seguir o main."
+        "follow_click_off": "Clique para deixar de seguir o main.",
+        "session_diff_badge": "Alterações de {pane}"
       }
     },
     "skills": {
