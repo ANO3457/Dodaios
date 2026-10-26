@@ -1,0 +1,63 @@
+name: Validate local-model troubleshooting
+on:
+  push:
+    branches: [validation/local-model-troubleshooting-869]
+    paths: [.github/workflows/validate-local-model-docs.yml]
+permissions:
+  contents: read
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7abb459c87750565187f9d990ca5a9b6aa377b77
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install documentation tools
+        run: python -m pip install PyYAML markdown-it-py
+      - name: Check all public product documentation
+        run: python scripts/ci/check_public_docs.py
+      - name: Render and check the troubleshooting table
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from markdown_it import MarkdownIt
+          source = Path("docs/product/personalize-and-connect/local-ai-providers.md").read_text()
+          body = source.split("---", 2)[2]
+          html = MarkdownIt("commonmark").enable("table").render(body)
+          Path("local-ai-providers.html").write_text(html, encoding="utf-8")
+          class Tables(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.rows = []
+                  self.in_row = False
+                  self.cells = 0
+                  self.text = ""
+              def handle_starttag(self, tag, attrs):
+                  if tag == "tr":
+                      self.in_row, self.cells, self.text = True, 0, ""
+                  if tag in ("th", "td") and self.in_row:
+                      self.cells += 1
+              def handle_data(self, text):
+                  if self.in_row:
+                      self.text += text
+              def handle_endtag(self, tag):
+                  if tag == "tr":
+                      self.rows.append((self.cells, self.text))
+                      self.in_row = False
+          parsed = Tables()
+          parsed.feed(html)
+          for text in ("dictation polish: No answer within 8s", "Whisper downloads", "Pipeline voice with Ollama"):
+              matches = [row for row in parsed.rows if text in row[1]]
+              assert len(matches) == 1 and matches[0][0] == 3, (text, matches)
+          print("All three troubleshooting entries render as three-column rows.")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-model-guide-render
+          path: local-ai-providers.html
