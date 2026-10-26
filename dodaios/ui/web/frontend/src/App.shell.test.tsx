@@ -69,7 +69,6 @@ beforeEach(() => {
   useEventStore.setState({
     activeSection: "chats",
     solo: false,
-    detachedViews: [],
   });
 });
 
@@ -78,7 +77,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("App shell around detached coding views", () => {
+describe("App shell", () => {
   it("keeps the main sidebar while Settings floats over the app", () => {
     render(<App />);
     expect(screen.getByTestId("sidebar")).toBeTruthy();
@@ -113,7 +112,6 @@ describe("App shell around detached coding views", () => {
   it("keeps the sidebar reachable in the main window", () => {
     useEventStore.setState({
       activeSection: "agentic-ide",
-      detachedViews: ["agentic-ide"],
     });
 
     render(<App />);
@@ -122,10 +120,9 @@ describe("App shell around detached coding views", () => {
     expect(screen.getByTestId("sidebar-resizer")).toBeTruthy();
   });
 
-  it("keeps the navigation rail visible in an attached coding workspace", () => {
+  it("keeps the navigation rail visible in the coding workspace", () => {
     useEventStore.setState({
       activeSection: "agentic-ide",
-      detachedViews: [],
     });
 
     render(<App />);
@@ -137,11 +134,10 @@ describe("App shell around detached coding views", () => {
     ).toBe(true);
   });
 
-  it("keeps a detached solo window free of the app navigation", () => {
+  it("keeps a solo tool window free of the app navigation", () => {
     useEventStore.setState({
       activeSection: "agentic-ide",
       solo: true,
-      detachedViews: ["agentic-ide"],
     });
 
     render(<App />);
