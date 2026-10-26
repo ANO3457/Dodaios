@@ -74,7 +74,9 @@ fetch_payload() { return 1; }
         ("main", "main"),
     ],
 )
-def test_shallow_checkout_updates_in_place(tmp_path: Path, initial_ref: str, target_ref: str) -> None:
+def test_shallow_checkout_updates_in_place(
+    tmp_path: Path, initial_ref: str, target_ref: str
+) -> None:
     remote = tmp_path / "remote"
     remote.mkdir()
     _git(remote, "init", "-q", "-b", "main")
