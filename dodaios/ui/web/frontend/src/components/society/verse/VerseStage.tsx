@@ -29,7 +29,7 @@ import { openPaneSession } from "../crewFeeds/codingNavigate";
 import { useProgressionSync } from "../progression/useProgressionSync";
 import { useProgression } from "../progression/progressionStore";
 import { RankCard, RanksOverlay, rankForLevel, useCommanderRank, useCommanderUniform } from "./ranks";
-import type { DeckId } from "./decks";
+import { type DeckId } from "./decks";
 import type { Deck, Station } from "./content/deck";
 import { useDeck } from "./content/useDeck";
 import { CAMERA_FAR } from "./engine/plateCamera";
@@ -72,6 +72,7 @@ import { LauncherPanel } from "./hud/LauncherPanel";
 import { SimulatorPanel } from "./hud/SimulatorPanel";
 import { ViewSettingsPanel } from "./hud/ViewSettingsPanel";
 import { StageRuntime } from "./runtime";
+import { VerseLoadingScreen } from "./VerseLoadingScreen";
 import { REACTOR_ARENA } from "./combat/arenaReactor";
 import { DuelController, type DuelDifficulty } from "./duel/duelController";
 import { attachDuelInput } from "./duel/duelInput";
@@ -165,6 +166,8 @@ export function VerseStage({ onOpenLedger, onSelectAgent, onCreateAgent, onOpenG
   const [eyeDeck, setEyeDeck] = useState<Deck | null>(null);
   const [eyeFailed, setEyeFailed] = useState<ReadonlySet<string>>(() => new Set());
   const [failure, setFailure] = useState<Error | null>(null);
+  /** The loading screen stays until the first deck is on screen, then fades out for good. */
+  const [loading, setLoading] = useState(true);
   const [debug, setDebug] = useState(false);
   const [hover, setHover] = useState<Hover>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -883,7 +886,7 @@ export function VerseStage({ onOpenLedger, onSelectAgent, onCreateAgent, onOpenG
       {chunkReady && (
         <div className="verse-hud">
           {!dueling && <FloatingLabels runtime={runtime} plates={plates} station={labelledStation} deck={deck} />}
-          {!dueling && <DeckTitle deck={deckId} t={t} counts={counts} rankCard={<RankCard compact={compact} />} />}
+          {!dueling && <DeckTitle deck={deckId} t={t} counts={counts} rankCard={<RankCard compact={compact} />} onLift={() => setPanel("lift")} />}
           {!dueling && <Toolbar
             t={t}
             view={view}
@@ -932,6 +935,7 @@ export function VerseStage({ onOpenLedger, onSelectAgent, onCreateAgent, onOpenG
           <div className="verse-doors" data-shut={doors !== null} aria-hidden><i /><i /></div>
         </div>
       )}
+      {loading && <VerseLoadingScreen ready={chunkReady && (plateReady || !!problem || !webgl)} onGone={() => setLoading(false)} />}
     </div>
   );
 }
