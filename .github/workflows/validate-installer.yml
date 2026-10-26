@@ -1,0 +1,61 @@
+name: Validate shallow installer updates
+on:
+  push:
+    branches: [validation/tag-install-update-455]
+    paths: [.github/workflows/validate-installer.yml]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ade779906cb057f3b5ea9d28f3098b2beb06ca16
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test tools
+        run: python -m pip install pytest ruff
+      - name: Validate shell and test style
+        run: |
+          bash -n install/install.sh
+          ruff check tests/unit/install/test_install_tag_updates.py
+          ruff format --check tests/unit/install/test_install_tag_updates.py
+      - name: Prove the regression on the unchanged installer
+        run: |
+          cp install/install.sh "$RUNNER_TEMP/fixed-install.sh"
+          trap 'cp "$RUNNER_TEMP/fixed-install.sh" install/install.sh' EXIT
+          git show c2aeac0c642024b9207cf340cde19cd4b288d6c2:install/install.sh > install/install.sh
+          set +e
+          python -m pytest --confcutdir=tests/unit/install tests/unit/install/test_install_tag_updates.py -q --junitxml=baseline.xml
+          status=$?
+          set -e
+          test "$status" -eq 1
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('baseline.xml').getroot()
+          cases = root.findall('.//testcase')
+          assert len(cases) == 4, len(cases)
+          assert len(root.findall('.//failure')) == 3
+          assert not root.findall('.//error')
+          assert not root.findall('.//skipped')
+          PY
+      - name: Test the fixed update and adjacent installer blocks
+        run: |
+          python -m pytest --confcutdir=tests/unit/install -q \
+            tests/unit/install/test_install_tag_updates.py \
+            tests/unit/install/test_install_salvage_copy.py \
+            tests/unit/install/test_install_legacy_origin.py \
+            tests/unit/install/test_install_stops_app_first.py \
+            --junitxml=fixed.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shallow-installer-evidence
+          path: |
+            baseline.xml
+            fixed.xml
