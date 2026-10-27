@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, ChevronRight, Loader2, RefreshCw, Search, Star, Users } from "lucide-react";
 import { ProviderLogo } from "@/components/providers/ProviderLogo";
@@ -32,8 +32,14 @@ const FAVORITES = "favorites";
  * the left picks which provider's models are listed (plus a starred tab);
  * typing searches every provider at once.
  */
-export function AgentModelPicker({ agent, busy, onSavingChange }: {
+export function AgentModelPicker({ agent, busy, onSavingChange, anchorRef, bare = false, triggerClassName }: {
   agent: SocietyAgent; busy: boolean; onSavingChange: (saving: boolean) => void;
+  /** Places the menu against this element instead of the trigger (a hidden trigger has no place of its own). */
+  anchorRef?: RefObject<HTMLElement | null>;
+  /** Keeps the trigger in the DOM but out of sight; something else (a menu row, "/model") presses it. */
+  bare?: boolean;
+  /** Replaces the trigger's own look, for a row in a settings list. */
+  triggerClassName?: string;
 }) {
   const t = useT();
   const update = useUpdateAgentModel();
@@ -150,7 +156,7 @@ export function AgentModelPicker({ agent, busy, onSavingChange }: {
   useLayoutEffect(() => {
     let frame = 0;
     const place = () => {
-      const rect = trigger.current?.getBoundingClientRect();
+      const rect = (anchorRef?.current ?? trigger.current)?.getBoundingClientRect();
       if (!rect) return;
       const above = rect.top > window.innerHeight - rect.bottom;
       const width = Math.min(380, window.innerWidth - 16);
@@ -170,7 +176,7 @@ export function AgentModelPicker({ agent, busy, onSavingChange }: {
     };
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
     // Resizing the composer or its ancestors can move an unchanged trigger.
-    for (let node: HTMLElement | null = trigger.current; node; node = node.parentElement) observer?.observe(node);
+    for (let node: HTMLElement | null = anchorRef?.current ?? trigger.current; node; node = node.parentElement) observer?.observe(node);
     // Prepare geometry while hidden; opening must not force a page layout.
     place();
     window.addEventListener("resize", schedule);
@@ -291,12 +297,19 @@ export function AgentModelPicker({ agent, busy, onSavingChange }: {
     <button ref={trigger} data-chat-model-trigger type="button" aria-label={t("society.chat.model")} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined}
       disabled={busy || saving} title={busy ? t("society.chat.model_busy") : t("society.chat.model")}
       onClick={() => { if (open) close(); else { setSearch(""); setAccounts({}); setExpanded({}); setError(null); setSection(agent.provider || ""); setOpen(true); } }}
-      className="flex max-w-full items-center gap-1.5 rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
-      {external ? <ProviderLogo providerId={agent.runtime!} label={t(`society.runtime.${agent.runtime}`)} size="sm" /> : null}
-      {agent.provider ? <ProviderLogo providerId={agent.provider} label={agent.providerLabel} size="sm" /> : null}
-      <span className="truncate">{agent.model || agent.providerLabel || t("society.chat.model_default")}</span>
-      {agent.effort ? <span className="shrink-0 opacity-70">{effortLabel(agent.effort, t)}</span> : null}
-      <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+      hidden={bare}
+      // `hidden` alone loses to a display utility, so a bare trigger carries no other class.
+      className={bare ? "hidden" : triggerClassName ?? "flex max-w-full items-center gap-1.5 rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"}>
+      {triggerClassName ? <>
+        <span className="ap-line-label">{t("society.chat.model")}</span>
+        <span className="ap-line-value">{agent.model || agent.providerLabel || t("society.chat.model_default")}{agent.effort ? ` · ${effortLabel(agent.effort, t)}` : ""}</span>
+      </> : <>
+        {external ? <ProviderLogo providerId={agent.runtime!} label={t(`society.runtime.${agent.runtime}`)} size="sm" /> : null}
+        {agent.provider ? <ProviderLogo providerId={agent.provider} label={agent.providerLabel} size="sm" /> : null}
+        <span className="truncate">{agent.model || agent.providerLabel || t("society.chat.model_default")}</span>
+        {agent.effort ? <span className="shrink-0 opacity-70">{effortLabel(agent.effort, t)}</span> : null}
+        <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+      </>}
     </button>
     {host && (open || !loading) ? createPortal(<>
       <div ref={panel} id={menuId} aria-hidden={!open} style={{ ...position, visibility: open ? "visible" : "hidden", contain: "layout paint style" }} className="fixed z-[80] flex overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-float"
@@ -357,14 +370,14 @@ export function AgentModelPicker({ agent, busy, onSavingChange }: {
             <div className="sticky top-0 z-10 flex items-center gap-1 bg-popover px-3 pb-1 pt-3">
               {foldable && isRouter ? <button type="button" data-menu-choice disabled={busy || saving}
                 onClick={toggle} aria-label={title} aria-expanded={isExpanded} aria-controls={choicesId}
-                className="flex min-w-0 flex-1 items-center gap-1 rounded text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                className="flex min-w-0 flex-1 items-center gap-1 rounded text-left text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 {isExpanded ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
                 <span className="truncate">{title}</span><span className="ml-auto">{models.length}</span>
-              </button> : <span className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" title={title}>{title}</span>}
+              </button> : <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground" title={title}>{title}</span>}
               {seat.accounts.length ? <button type="button" disabled={busy || saving} data-menu-choice
                 aria-label={`${t("society.chat.model_account")}: ${title}`} aria-haspopup="menu" aria-expanded={submenu?.provider === seat.key && !submenu.model}
                 onClick={(event) => setSubmenu({ provider: seat.key, anchor: event.currentTarget.getBoundingClientRect() })}
-                className="flex max-w-[140px] items-center gap-1 rounded px-1 py-0.5 text-[10px] text-muted-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                className="flex max-w-[140px] items-center gap-1 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <Users className="h-3 w-3 shrink-0" aria-hidden /><span className="truncate">{seat.accounts.find((account) => account.id === currentAccount(seat))?.label ?? t("society.chat.model_active_account")}</span><ChevronDown className="h-2.5 w-2.5 shrink-0" aria-hidden />
               </button> : null}
             </div>
@@ -400,7 +413,7 @@ export function AgentModelPicker({ agent, busy, onSavingChange }: {
       </div>
       {open && submenu && sideSeat ? <div ref={sidePanel} style={sideStyle} role="menu" aria-label={t(submenu.model ? "society.chat.effort" : "society.chat.model_account")}
         className="z-[81] overflow-y-auto rounded-md border border-border bg-popover py-1 shadow-float" onKeyDown={(event) => moveFocus(event, sidePanel.current)}>
-        <p className="px-3 py-2 text-[11px] font-semibold uppercase text-muted-foreground">{submenu.model ? t("society.chat.effort") : t("society.chat.model_account")}</p>
+        <p className="px-3 py-2 text-xs font-medium text-muted-foreground">{submenu.model ? t("society.chat.effort") : t("society.chat.model_account")}</p>
         {submenu.model ? effortsFor(sideSeat, submenu.model.id).map((effort) => <button key={effort} type="button" role="menuitemradio" data-menu-choice
           aria-checked={effort === preferredEffort(sideSeat, submenu.model!)} disabled={busy || saving}
           onClick={() => void save(sideSeat, submenu.model!, effort)} className={menuRow}>
