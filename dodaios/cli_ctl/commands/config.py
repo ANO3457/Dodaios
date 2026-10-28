@@ -62,6 +62,34 @@ def set_value(
     )
 
 
+@app.command("confirm")
+def confirm(
+    pending_id: str = typer.Argument(..., help="Pending mutation id from `config set`."),
+    yes: bool = options.yes_opt(),
+    dry_run: bool = options.dry_opt(),
+) -> None:
+    """Confirm and apply a pending ASK-tier config mutation (destructive: --yes)."""
+    invoke.run(
+        "POST", "/api/control/config/confirm",
+        body={"pending_id": pending_id},
+        assume_yes=yes, dry_run=dry_run, dangerous=True,
+    )
+
+
+@app.command("reject")
+def reject(
+    pending_id: str = typer.Argument(..., help="Pending mutation id from `config set`."),
+    yes: bool = options.yes_opt(),
+    dry_run: bool = options.dry_opt(),
+) -> None:
+    """Reject and discard a pending ASK-tier config mutation."""
+    invoke.run(
+        "POST", "/api/control/config/reject",
+        body={"pending_id": pending_id},
+        assume_yes=yes, dry_run=dry_run, dangerous=False,
+    )
+
+
 @language_app.command("get")
 def language_get() -> None:
     """Show the current reply language + the available options."""

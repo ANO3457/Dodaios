@@ -67,9 +67,11 @@ def _require_cu_wired() -> None:
             status_code=503,
             detail=(
                 "computer-use is not active on this machine: "
-                "[computer_use].enabled is false (the shipped default) or no "
-                "vision engine could be built. Enable it with "
-                f"`{CLI_COMMAND_NAME} config set computer_use.enabled true` and restart."
+                "no vision engine could be built (check `[brain.router.vision].enabled` "
+                "and vision provider credentials) or `[computer_use].enabled` was set "
+                "to false (it defaults to true). If disabled, enable it with "
+                f"`{CLI_COMMAND_NAME} config set computer_use.enabled true --yes` "
+                f"(then `{CLI_COMMAND_NAME} config confirm <pending_id> --yes`) and restart."
             ),
         )
 

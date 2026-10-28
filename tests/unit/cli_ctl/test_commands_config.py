@@ -60,3 +60,27 @@ def test_language_set(capture_api):
     call = capture_api["calls"][-1]
     assert call["method"] == "PUT" and call["path"] == "/api/settings/reply-language"
     assert call["body"] == {"language": "es", "persist": True}
+
+
+def test_confirm_requires_yes(capture_api):
+    res = runner.invoke(app, ["config", "confirm", "00000000-0000-0000-0000-000000000001"])
+    assert res.exit_code == 1
+    assert capture_api["calls"] == []
+
+
+def test_confirm_with_yes_posts_pending_id(capture_api):
+    pid = "00000000-0000-0000-0000-000000000001"
+    res = runner.invoke(app, ["config", "confirm", pid, "--yes"])
+    assert res.exit_code == 0
+    call = capture_api["calls"][-1]
+    assert call["method"] == "POST" and call["path"] == "/api/control/config/confirm"
+    assert call["body"] == {"pending_id": pid}
+
+
+def test_reject_posts_pending_id(capture_api):
+    pid = "00000000-0000-0000-0000-000000000002"
+    res = runner.invoke(app, ["config", "reject", pid])
+    assert res.exit_code == 0
+    call = capture_api["calls"][-1]
+    assert call["method"] == "POST" and call["path"] == "/api/control/config/reject"
+    assert call["body"] == {"pending_id": pid}
