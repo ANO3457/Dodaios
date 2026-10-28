@@ -757,20 +757,56 @@ def _build_ui_bundle(index: Path) -> bool:
     branch. It needs npm; without it the caller says so and stops.
     """
     npm = shutil.which("npm")
+    if npm is None:
+        note("no prebuilt UI found and Node.js/npm is not installed to build one")
+        note(
+            "release installs always ship the UI; a checkout of main needs "
+            "`npm run build` in dodaios/ui/web/frontend"
+        )
+        return False
     frontend = index.parent.parent / "frontend"
-    if npm is None or not (frontend / "package-lock.json").is_file():
+    if not (frontend / "package-lock.json").is_file():
+        note(
+            "no prebuilt UI found and dodaios/ui/web/frontend/package-lock.json "
+            "is missing"
+        )
         return False
     for args, label in (
         (["ci"], "installing the UI build tools (npm ci)"),
         (["run", "build"], "building the UI (npm run build)"),
     ):
+        cmd_name = f"npm {' '.join(args)}"
         try:
             result = run_captured([npm, *args], cwd=frontend, label=label, timeout=1800)
-        except (OSError, subprocess.TimeoutExpired):
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            note(f"UI build command '{cmd_name}' failed: {rich_escape(str(exc))}")
             return False
         if result.returncode != 0:
+            note(
+                f"UI build command '{cmd_name}' failed with exit code "
+                f"{result.returncode}"
+            )
+            combined = "\n".join(
+                part.strip()
+                for part in (
+                    getattr(result, "stdout", "") or "",
+                    getattr(result, "stderr", "") or "",
+                )
+                if part and part.strip()
+            )
+            output_tail = combined.splitlines()[-15:]
+            if output_tail:
+                note("npm output tail:")
+                for line in output_tail:
+                    note(rich_escape(line))
             return False
-    return index.is_file()
+    if not index.is_file():
+        note(
+            "UI build finished (npm run build exited 0) but build output is "
+            "incomplete: dodaios/ui/web/dist/index.html was not produced"
+        )
+        return False
+    return True
 
 
 def step_ui_bundle_check() -> bool:
@@ -783,9 +819,6 @@ def step_ui_bundle_check() -> bool:
     dist = repo_root() / "dodaios" / "ui" / "web" / "dist"
     index = dist / "index.html"
     if not index.is_file() and not _build_ui_bundle(index):
-        note("no prebuilt UI found and Node.js/npm is not installed to build one")
-        note("release installs always ship the UI; a checkout of main needs "
-             "`npm run build` in dodaios/ui/web/frontend")
         return False
     import re
 
