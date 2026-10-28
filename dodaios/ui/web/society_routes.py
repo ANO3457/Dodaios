@@ -348,7 +348,31 @@ def _agent_row(agent: AgentRecord, request: HTTPConnection) -> dict[str, Any]:
     surface (office, roster, chat, CLI) shows what the user calls it. Resolved per
     request, so a changed wake word shows up without a restart.
     """
-    return display_row(agent, getattr(request.app.state, "config", None))
+    row = display_row(agent, getattr(request.app.state, "config", None))
+    row["billed_per_token"] = _billed_per_token(agent, getattr(request.app.state, "config", None))
+    return row
+
+
+def _billed_per_token(agent: AgentRecord, cfg: Any = None) -> bool:
+    """Whether the agent's seat pays per token (an API key), not a plan.
+
+    A subscription or a keyless local model spends no money per run, so the
+    card shows runs and activity there instead of dollar amounts. An agent
+    without its own seat answers on the app's default model: that one decides.
+    """
+    provider = str(agent.provider or "")
+    try:
+        if not provider and cfg is not None:
+            from dodaios.society.chat_binding import pair_for
+
+            provider = str(pair_for(cfg, agent)[0] or "")
+        if not provider:
+            return True
+        from dodaios.society.routine_runner import _billed_via_api
+
+        return _billed_via_api(provider, str(agent.account_id or ""))
+    except Exception:  # noqa: BLE001 — unknown seats keep showing their costs
+        return True
 
 
 @router.get("/agents")
@@ -670,6 +694,14 @@ async def archive_agent(agent_id: str, request: Request) -> dict[str, Any]:
         archived = await rt.roster.archive(agent.agent_id)
     except RosterError as exc:
         raise _typed_error(exc) from exc
+    # A retired agent keeps no routine, webhook or trigger armed.
+    store = getattr(request.app.state, "task_store", None)
+    if store is not None:
+        from dodaios.society.routines import retire_agent_routines
+
+        await retire_agent_routines(
+            store, getattr(request.app.state, "task_scheduler", None), agent.agent_id
+        )
     return {"agent": _agent_row(archived, request)}
 
 
@@ -1801,6 +1833,8 @@ async def create_agent_routine(
     agent = await rt.roster.resolve(agent_id)
     if agent is None:
         raise HTTPException(404, {"reason": str(FailureReason.TARGET_UNKNOWN)})
+    if str(getattr(agent, "state", "")) == "archived":
+        raise HTTPException(409, "The agent is retired")
     with _turn_timezone(request):
         return await _create_routine_for(agent, body, request)
 
@@ -1830,6 +1864,9 @@ async def operate_agent_routine(
     scheduler = getattr(request.app.state, "task_scheduler", None)
     if scheduler is None:
         raise HTTPException(503, "The task scheduler is unavailable")
+    if str(getattr(agent, "state", "")) == "archived" and body.operation in ("run", "resume"):
+        # A retired agent runs nothing; bring the agent back first.
+        raise HTTPException(409, "The routine's agent is retired")
     if body.operation == "run" and row.get("state") == "running":
         raise HTTPException(409, "The routine is already running")
     try:
