@@ -62,10 +62,12 @@ _Generated from the curated command tree by `scripts/ci/gen_cli_reference.py` �
 
 ## config
 
+- `dodaios config confirm <pending_id> --yes --dry-run` — Confirm and apply a pending ASK-tier config mutation (destructive: --yes).
 - `dodaios config get <path>` — Get a config value by dotted path (control-key gated).
 - `dodaios config language get` — Show the current reply language + the available options.
 - `dodaios config language set <lang> --persist --yes --dry-run` — Set the reply language (hot-reloads, no restart).
 - `dodaios config list` — List the mutable-settings allowlist (path, risk tier, restart needed).
+- `dodaios config reject <pending_id> --yes --dry-run` — Reject and discard a pending ASK-tier config mutation.
 - `dodaios config set <path> <value> --reason --yes --dry-run` — Set a mutable config value via the atomic write pipeline (destructive: --yes).
 
 ## contacts

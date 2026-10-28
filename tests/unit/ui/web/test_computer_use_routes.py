@@ -60,7 +60,10 @@ def test_start_refuses_honestly_when_cu_is_not_wired(app: FastAPI) -> None:
     with TestClient(app) as client:
         r = client.post("/api/computer-use/goals", json={"goal": "open the browser"})
     assert r.status_code == 503
-    assert "computer_use.enabled" in r.json()["detail"]
+    detail = r.json()["detail"]
+    assert "computer_use.enabled" in detail
+    assert "[brain.router.vision].enabled" in detail
+    assert "config confirm" in detail
 
 
 def test_start_returns_a_pollable_mission_id(app: FastAPI, wired: list) -> None:
