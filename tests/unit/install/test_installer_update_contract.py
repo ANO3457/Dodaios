@@ -172,12 +172,66 @@ def test_ui_bundle_check_builds_a_missing_bundle_with_npm(
 
 
 def test_ui_bundle_check_without_npm_reports_a_missing_bundle(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
 ) -> None:
     monkeypatch.setattr(installer, "repo_root", lambda: tmp_path)
     monkeypatch.setattr(installer.shutil, "which", lambda name: None)
 
     assert installer.step_ui_bundle_check() is False
+    out = capsys.readouterr().out
+    assert "Node.js/npm is not installed" in out
+
+
+def test_ui_bundle_check_reports_npm_nonzero_exit_and_stderr_tail(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+) -> None:
+    frontend = tmp_path / "dodaios" / "ui" / "web" / "frontend"
+    frontend.mkdir(parents=True)
+    (frontend / "package-lock.json").write_text("{}\n", encoding="utf-8")
+    stderr_lines = "\n".join(f"npm-err-{idx}" for idx in range(20))
+
+    def fake_build(cmd, *, label, cwd=None, timeout=None):
+        if cmd[1:] == ["run", "build"]:
+            return subprocess.CompletedProcess(
+                cmd, 2, "vite build started\n", stderr_lines
+            )
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(installer, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(installer.shutil, "which", lambda name: "npm")
+    monkeypatch.setattr(installer, "run_captured", fake_build)
+
+    assert installer.step_ui_bundle_check() is False
+    out = capsys.readouterr().out
+    assert "Node.js/npm is not installed" not in out
+    assert "npm run build" in out
+    assert "exit code 2" in out
+    assert "npm-err-19" in out
+    assert "npm-err-0" not in out
+
+
+def test_ui_bundle_check_reports_incomplete_build_output_when_index_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+) -> None:
+    frontend = tmp_path / "dodaios" / "ui" / "web" / "frontend"
+    frontend.mkdir(parents=True)
+    (frontend / "package-lock.json").write_text("{}\n", encoding="utf-8")
+
+    monkeypatch.setattr(installer, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(installer.shutil, "which", lambda name: "npm")
+    monkeypatch.setattr(
+        installer,
+        "run_captured",
+        lambda cmd, *, label, cwd=None, timeout=None: subprocess.CompletedProcess(
+            cmd, 0, "", ""
+        ),
+    )
+
+    assert installer.step_ui_bundle_check() is False
+    out = capsys.readouterr().out
+    assert "Node.js/npm is not installed" not in out
+    assert "build output is incomplete" in out
+    assert "index.html" in out
 
 
 def test_desktop_registration_failure_is_install_failure(
