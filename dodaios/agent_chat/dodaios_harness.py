@@ -476,12 +476,16 @@ def render_transcript(
 
 
 def _prose(content: str | list[dict[str, Any]]) -> str:
+    # Only a tool_use block makes a marker; one typed in a reply is an
+    # imitation and must not be replayed (see dodaios.brain.tool_marker).
+    from dodaios.brain.tool_marker import replay_text
+
     if isinstance(content, str):
-        return content
+        return replay_text(content)
     bits: list[str] = []
     for block in content:
         if block.get("type") == "text":
-            bits.append(str(block.get("text") or ""))
+            bits.append(replay_text(str(block.get("text") or "")))
         elif block.get("type") == "tool_use":
             bits.append(f"[used tool {block.get('name') or 'tool'}]")
     return "\n".join(b for b in bits if b.strip())

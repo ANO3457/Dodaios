@@ -54,8 +54,8 @@ _SPEECH_STACK_UNAVAILABLE_REASON = (
     "provider is missing. Check API Keys."
 )
 
-# BCP-47 from the canonical per-turn resolver (de/en/es/pt).
-_LANG_MAP = {"de": "de-DE", "en": "en-US", "es": "es-ES", "pt": "pt-PT"}
+# BCP-47 from the canonical per-turn resolver, including pinned French.
+_LANG_MAP = {"de": "de-DE", "en": "en-US", "es": "es-ES", "pt": "pt-PT", "fr": "fr-FR"}
 
 
 def browser_voice_enabled(cfg: Any) -> bool:
@@ -72,7 +72,11 @@ def browser_voice_enabled(cfg: Any) -> bool:
 
 
 def _resolve_language(cfg: Any) -> str:
-    pin = getattr(getattr(cfg, "brain", None), "reply_language", "") or ""
+    pin = str(getattr(getattr(cfg, "brain", None), "reply_language", "") or "").strip().lower()
+    # French is a spoken pin without a translated phrase catalog, so the
+    # catalog resolver would narrow it to English. The voice still follows it.
+    if pin in _LANG_MAP:
+        return _LANG_MAP[pin]
     language = resolve_output_language(pin, "", "", default=DEFAULT_LOCALE)
     return _LANG_MAP.get(language, _LANG_MAP[DEFAULT_LOCALE])
 
@@ -252,6 +256,7 @@ def _build_classic_browser_session(
         language_code=_resolve_language(cfg),
         bus=bus,
         config=cfg,
+        owns_brain=True,
     )
 
 
