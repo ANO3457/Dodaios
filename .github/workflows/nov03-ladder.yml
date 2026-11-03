@@ -1,0 +1,69 @@
+name: Validate ladder recipe
+on:
+  push:
+    branches: [validation/tag-install-update-455]
+    paths: [.github/workflows/nov03-ladder.yml]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: laaielichter/Godotwright
+          ref: 2f778c291b97e82fcd5f5518c09fde57f06cfd1e
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Install candidate
+        run: |
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+          files = {"data/recipes/ladder.json":"ewogInZlcnNpb24iOiAxLAogIm5hbWUiOiAibGFkZGVyIiwKICJhcmNoZXR5cGUiOiAicHJvcC5sYWRkZXIiLAogImRlc2NyaXB0aW9uIjogIkEgd29vZGVuIGxlYW5pbmcgbGFkZGVyIHdpdGggc2VwYXJhdGUgbGVmdCBhbmQgcmlnaHQgcmFpbHMgYW5kIGV2ZW5seSBzcGFjZWQgY3lsaW5kcmljYWwgcnVuZ3MuIFRoZSBydW5nIGVuZHMgbWVldCB0aGUgaW5uZXIgcmFpbCBmYWNlcy4gSXRzIGJhc2UgcmVzdHMgb24geSA9IDA7IHJvdGF0ZSB0aGUgYXNzZW1ibGVkIG1vZGVsIHRvIGxlYW4gaXQgYWdhaW5zdCBhIHdhbGwuIiwKICJwYXJhbXMiOiBbCiAgewogICAibmFtZSI6ICJsZW5ndGgiLAogICAidHlwZSI6ICJudW1iZXIiLAogICAiZGVmYXVsdCI6IDIuOCwKICAgIm1pbiI6IDEuNSwKICAgIm1heCI6IDYsCiAgICJkZXNjcmlwdGlvbiI6ICJMZW5ndGggb2YgdGhlIGxhZGRlciBpbiBtZXRyZXMuIgogIH0sCiAgewogICAibmFtZSI6ICJ3aWR0aCIsCiAgICJ0eXBlIjogIm51bWJlciIsCiAgICJkZWZhdWx0IjogMC40NSwKICAgIm1pbiI6IDAuMzUsCiAgICJtYXgiOiAwLjU1LAogICAiZGVzY3JpcHRpb24iOiAiT3V0c2lkZSBkaXN0YW5jZSBiZXR3ZWVuIHRoZSByYWlscyBpbiBtZXRyZXMuIgogIH0KIF0sCiAibWF0ZXJpYWxzIjogewogICJsYWRkZXJfd29vZCI6IHsKICAgImNvbG9yIjogWwogICAgMC41NiwKICAgIDAuMzQsCiAgICAwLjE0CiAgIF0sCiAgICJyb3VnaG5lc3MiOiAwLjg1LAogICAibWV0YWxsaWMiOiAwCiAgfQogfSwKICJub2RlcyI6IFsKICB7CiAgICJuYW1lIjogIkxhZGRlciIsCiAgICJtYXRlcmlhbCI6ICJsYWRkZXJfd29vZCIsCiAgICJjaGlsZHJlbiI6IFsKICAgIHsKICAgICAibmFtZSI6ICJSYWlsTGVmdCIsCiAgICAgInNoYXBlIjogImJveCIsCiAgICAgInNpemUiOiBbCiAgICAgIDAuMDUsCiAgICAgICIkbGVuZ3RoIiwKICAgICAgMC4wNwogICAgIF0sCiAgICAgImF0IjogWwogICAgICAiLSR3aWR0aCAvIDIgKyAwLjAyNSIsCiAgICAgICIkbGVuZ3RoIC8gMiIsCiAgICAgIDAKICAgICBdCiAgICB9LAogICAgewogICAgICJuYW1lIjogIlJhaWxSaWdodCIsCiAgICAgInNoYXBlIjogImJveCIsCiAgICAgInNpemUiOiBbCiAgICAgIDAuMDUsCiAgICAgICIkbGVuZ3RoIiwKICAgICAgMC4wNwogICAgIF0sCiAgICAgImF0IjogWwogICAgICAiJHdpZHRoIC8gMiAtIDAuMDI1IiwKICAgICAgIiRsZW5ndGggLyAyIiwKICAgICAgMAogICAgIF0KICAgIH0sCiAgICB7CiAgICAgIm5hbWUiOiAiUnVuZyIsCiAgICAgInNoYXBlIjogImN5bGluZGVyIiwKICAgICAicmFkaXVzIjogMC4wMTgsCiAgICAgImhlaWdodCI6ICIkd2lkdGggLSAwLjEiLAogICAgICJheGlzIjogIngiLAogICAgICJzZWdtZW50cyI6IDE2LAogICAgICJhdCI6IFsKICAgICAgMCwKICAgICAgMC4xNSwKICAgICAgMAogICAgIF0sCiAgICAgInJlcGVhdCI6IHsKICAgICAgImNvdW50IjogImZsb29yKCgkbGVuZ3RoIC0gMC4zKSAvIDAuMjgpICsgMSIsCiAgICAgICJzdGVwIjogWwogICAgICAgMCwKICAgICAgIDAuMjgsCiAgICAgICAwCiAgICAgIF0KICAgICB9CiAgICB9CiAgIF0KICB9CiBdCn0K","test/build/ladder.test.ts":"aW1wb3J0IHsgZGVzY3JpYmUsIGV4cGVjdCwgaXQgfSBmcm9tICJ2aXRlc3QiOwppbXBvcnQgeyBidWlsZEtpbmQgfSBmcm9tICIuLi8uLi9zcmMvYnVpbGQvZ2VuZXJhdG9ycy9pbmRleC5qcyI7CmltcG9ydCB7IGluc3BlY3RNb2RlbCB9IGZyb20gIi4uLy4uL3NyYy9tb2RlbC9pbnNwZWN0LmpzIjsKaW1wb3J0IHsgd3JpdGVTY2VuZSB9IGZyb20gIi4vaGVscGVycy5qcyI7CgpkZXNjcmliZSgibGFkZGVyIHJlY2lwZSIsICgpID0+IHsKICBpdC5lYWNoKFsxLjUsIDIuOCwgNl0pKCJrZWVwcyB0aGUgcnVuZ3MgMC4yOCBtIGFwYXJ0IGFuZCBpbnNpZGUgcmFpbHMgb2YgbGVuZ3RoICVzIiwgKGxlbmd0aCkgPT4gewogICAgY29uc3QgaW5mbyA9IGluc3BlY3RNb2RlbCh3cml0ZVNjZW5lKGJ1aWxkS2luZCgibGFkZGVyIiwgeyBsZW5ndGggfSkpKTsKICAgIGNvbnN0IHJ1bmdzID0gaW5mby5ub2Rlcy5maWx0ZXIoKG4pID0+IC9eUnVuZ19cZCskLy50ZXN0KG4ubmFtZSkpOwogICAgZXhwZWN0KHJ1bmdzLmxlbmd0aCkudG9CZUdyZWF0ZXJUaGFuT3JFcXVhbCg1KTsKICAgIGV4cGVjdChydW5nc1swXSEub3JpZ2luWzFdKS50b0JlR3JlYXRlclRoYW4oMCk7CiAgICBleHBlY3QocnVuZ3MuYXQoLTEpIS5vcmlnaW5bMV0pLnRvQmVMZXNzVGhhbihsZW5ndGgpOwogICAgZm9yIChsZXQgaSA9IDE7IGkgPCBydW5ncy5sZW5ndGg7IGkrKykgewogICAgICBleHBlY3QocnVuZ3NbaV0hLm9yaWdpblsxXSAtIHJ1bmdzW2kgLSAxXSEub3JpZ2luWzFdKS50b0JlQ2xvc2VUbygwLjI4KTsKICAgIH0KICAgIGV4cGVjdChpbmZvLmJvdW5kcyEubWluWzFdKS50b0JlQ2xvc2VUbygwKTsKICAgIGV4cGVjdChpbmZvLmJvdW5kcyEuc2l6ZVsxXSkudG9CZUNsb3NlVG8obGVuZ3RoKTsKICB9KTsKfSk7Cg=="}
+          for name,content in files.items():
+              p=Path(name); p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(base64.b64decode(content))
+          
+          PY
+      - name: Full project checks
+        run: |
+          npm run typecheck
+          npm test -- --reporter=json --outputFile=ladder-tests.json
+          npm run build
+          git diff --check
+      - name: Real CLI build lint and text view
+        env:
+          NO_COLOR: '1'
+        run: |
+          node dist/cli.js model build ladder -o ladder.glb
+          node dist/cli.js model lint ladder.glb --archetype prop.ladder
+          node dist/cli.js model view ladder.glb > ladder-view.txt
+          sha256sum data/recipes/ladder.json test/build/ladder.test.ts
+      - name: Render the actual GLB for visual review
+        run: |
+          npm install --prefix "$RUNNER_TEMP/render" playwright three
+          cd "$RUNNER_TEMP/render"
+          npx playwright install chromium
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+          Path('index.html').write_bytes(base64.b64decode('PCFkb2N0eXBlIGh0bWw+PGh0bWw+PGhlYWQ+PG1ldGEgY2hhcnNldD0idXRmLTgiPjxzdHlsZT5ib2R5e21hcmdpbjowO2JhY2tncm91bmQ6I2U3ZWJlZjtmb250OjE4cHggc3lzdGVtLXVpfWgxe3Bvc2l0aW9uOmFic29sdXRlO3RvcDoxMnB4O2xlZnQ6MjRweDttYXJnaW46MDtmb250LXNpemU6MjJweDtjb2xvcjojMjAyYjM1fWNhbnZhc3tkaXNwbGF5OmJsb2NrfTwvc3R5bGU+PHNjcmlwdCB0eXBlPSJpbXBvcnRtYXAiPnsiaW1wb3J0cyI6eyJ0aHJlZSI6Ii9ub2RlX21vZHVsZXMvdGhyZWUvYnVpbGQvdGhyZWUubW9kdWxlLmpzIiwidGhyZWUvYWRkb25zLyI6Ii9ub2RlX21vZHVsZXMvdGhyZWUvZXhhbXBsZXMvanNtLyJ9fTwvc2NyaXB0PjwvaGVhZD48Ym9keT48aDE+bGFkZGVyLmdsYiDigJQgYWN0dWFsIG1vZGVsIHJlbmRlcjwvaDE+PHNjcmlwdCB0eXBlPSJtb2R1bGUiPmltcG9ydCAqIGFzIFRIUkVFIGZyb20gJ3RocmVlJztpbXBvcnQge0dMVEZMb2FkZXJ9IGZyb20gJ3RocmVlL2FkZG9ucy9sb2FkZXJzL0dMVEZMb2FkZXIuanMnO2NvbnN0IHNjZW5lPW5ldyBUSFJFRS5TY2VuZSgpO3NjZW5lLmJhY2tncm91bmQ9bmV3IFRIUkVFLkNvbG9yKDB4ZTdlYmVmKTtjb25zdCBjYW1lcmE9bmV3IFRIUkVFLlBlcnNwZWN0aXZlQ2FtZXJhKDMyLDEwMDAvMTIwMCwwLjAxLDEwMCk7Y29uc3QgcmVuZGVyZXI9bmV3IFRIUkVFLldlYkdMUmVuZGVyZXIoe2FudGlhbGlhczp0cnVlfSk7cmVuZGVyZXIuc2V0U2l6ZSgxMDAwLDEyMDApO3JlbmRlcmVyLnNldFBpeGVsUmF0aW8oMSk7ZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChyZW5kZXJlci5kb21FbGVtZW50KTtzY2VuZS5hZGQobmV3IFRIUkVFLkhlbWlzcGhlcmVMaWdodCgweGZmZmZmZiwweDZjNzI3OCwyLjUpKTtjb25zdCBzdW49bmV3IFRIUkVFLkRpcmVjdGlvbmFsTGlnaHQoMHhmZmZmZmYsNCk7c3VuLnBvc2l0aW9uLnNldCg1LDgsNyk7c2NlbmUuYWRkKHN1bik7bmV3IEdMVEZMb2FkZXIoKS5sb2FkKCcvbGFkZGVyLmdsYicsZz0+e3NjZW5lLmFkZChnLnNjZW5lKTtjb25zdCBib3g9bmV3IFRIUkVFLkJveDMoKS5zZXRGcm9tT2JqZWN0KGcuc2NlbmUpO2NvbnN0IGNlbnRlcj1ib3guZ2V0Q2VudGVyKG5ldyBUSFJFRS5WZWN0b3IzKCkpO2NvbnN0IHNpemU9Ym94LmdldFNpemUobmV3IFRIUkVFLlZlY3RvcjMoKSk7Y29uc3QgZmxvb3I9bmV3IFRIUkVFLk1lc2gobmV3IFRIUkVFLlBsYW5lR2VvbWV0cnkoMjAsMjApLG5ldyBUSFJFRS5NZXNoU3RhbmRhcmRNYXRlcmlhbCh7Y29sb3I6MHhjYmQxZDgscm91Z2huZXNzOjF9KSk7Zmxvb3Iucm90YXRpb24ueD0tTWF0aC5QSS8yO2Zsb29yLnBvc2l0aW9uLnk9LTAuMDAyO3NjZW5lLmFkZChmbG9vcik7Y2FtZXJhLnBvc2l0aW9uLnNldCgyLjEsY2VudGVyLnkrMS4yLDcuMyk7Y2FtZXJhLmxvb2tBdChjZW50ZXIpO3JlbmRlcmVyLnJlbmRlcihzY2VuZSxjYW1lcmEpO2RvY3VtZW50LmJvZHkuZGF0YXNldC5yZWFkeT0ndHJ1ZSc7fSx1bmRlZmluZWQsZT0+e2RvY3VtZW50LmJvZHkuZGF0YXNldC5lcnJvcj1TdHJpbmcoZSk7fSk7PC9zY3JpcHQ+PC9ib2R5PjwvaHRtbD4='))
+          Path('render.mjs').write_bytes(base64.b64decode('aW1wb3J0IHsgY2hyb21pdW0gfSBmcm9tICdwbGF5d3JpZ2h0JzsKaW1wb3J0IHsgd3JpdGVGaWxlIH0gZnJvbSAnbm9kZTpmcy9wcm9taXNlcyc7CmNvbnN0IGJyb3dzZXI9YXdhaXQgY2hyb21pdW0ubGF1bmNoKHtoZWFkbGVzczp0cnVlLGFyZ3M6WyctLXVzZS1hbmdsZT1zd2lmdHNoYWRlcicsJy0tZW5hYmxlLXVuc2FmZS1zd2lmdHNoYWRlciddfSk7CnRyeSB7Y29uc3QgcGFnZT1hd2FpdCBicm93c2VyLm5ld1BhZ2Uoe3ZpZXdwb3J0Ont3aWR0aDoxMDAwLGhlaWdodDoxMjAwfX0pO2F3YWl0IHBhZ2UuZ290bygnaHR0cDovLzEyNy4wLjAuMTo4NzY1Jyk7YXdhaXQgcGFnZS53YWl0Rm9yRnVuY3Rpb24oKCk9PmRvY3VtZW50LmJvZHkuZGF0YXNldC5yZWFkeT09PSd0cnVlJyx7dGltZW91dDozMDAwMH0pO2F3YWl0IHBhZ2Uuc2NyZWVuc2hvdCh7cGF0aDpwcm9jZXNzLmVudi5SRU5ERVJfT1VULGZ1bGxQYWdlOnRydWV9KTt9IGZpbmFsbHkge2F3YWl0IGJyb3dzZXIuY2xvc2UoKTt9Cg=='))
+          PY
+          cp "$GITHUB_WORKSPACE/ladder.glb" .
+          python -m http.server 8765 --bind 127.0.0.1 > server.log 2>&1 &
+          RENDER_OUT="$GITHUB_WORKSPACE/ladder.png" node render.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ladder-tested
+          path: |
+            data/recipes/ladder.json
+            test/build/ladder.test.ts
+            ladder.glb
+            ladder.png
+            ladder-view.txt
+            ladder-tests.json
