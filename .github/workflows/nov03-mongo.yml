@@ -1,0 +1,49 @@
+name: Validate Mongo config readability
+on:
+  push:
+    branches: [validation/tag-install-update-455]
+    paths: [.github/workflows/nov03-mongo.yml]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: dbfixtures/pytest-mongo
+          ref: 587fc82787f43ff585909ba75b27dd15de414dd8
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e . ruff build
+      - name: Install candidate
+        run: |
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+          files = {"pytest_mongo/config.py":"IiIiTW9uZ28gY29uZmlnIGdldHRlci4iIiIKCmZyb20gZGF0YWNsYXNzZXMgaW1wb3J0IGRhdGFjbGFzcwpmcm9tIHR5cGluZyBpbXBvcnQgQW55Cgpmcm9tIHB5dGVzdCBpbXBvcnQgRml4dHVyZVJlcXVlc3QKCgpAZGF0YWNsYXNzCmNsYXNzIE1vbmdvQ29uZmlnOgogICAgIiIiTW9uZ28gY29uZmlnIGRhdGFjbGFzcy4iIiIKCiAgICBleGVjOiBzdHIKICAgIGhvc3Q6IHN0cgogICAgcG9ydDogaW50IHwgTm9uZQogICAgcG9ydF9zZWFyY2hfY291bnQ6IGludAogICAgcGFyYW1zOiBzdHIKICAgIHR6X2F3YXJlOiBib29sCiAgICB1c2VybmFtZTogc3RyIHwgTm9uZQogICAgcGFzc3dvcmQ6IHN0ciB8IE5vbmUKICAgIGF1dGhfc291cmNlOiBzdHIgfCBOb25lCiAgICB1cmk6IHN0ciB8IE5vbmUKICAgIHRsczogYm9vbAogICAgZGJuYW1lOiBzdHIKICAgIGRiczogbGlzdFtzdHJdCgoKZGVmIGdldF9jb25maWcocmVxdWVzdDogRml4dHVyZVJlcXVlc3QpIC0+IE1vbmdvQ29uZmlnOgogICAgIiIiUmV0dXJuIGEgTW9uZ29Db25maWcgd2l0aCBjb25maWcgb3B0aW9ucy4iIiIKCiAgICBkZWYgZ2V0X21vbmdvX29wdGlvbihvcHRpb246IHN0cikgLT4gQW55OgogICAgICAgIG5hbWUgPSAibW9uZ29fIiArIG9wdGlvbgogICAgICAgIHJldHVybiByZXF1ZXN0LmNvbmZpZy5nZXRvcHRpb24obmFtZSkgb3IgcmVxdWVzdC5jb25maWcuZ2V0aW5pKG5hbWUpCgogICAgcG9ydCA9IGdldF9tb25nb19vcHRpb24oInBvcnQiKQoKICAgIHR6X2F3YXJlX29wdGlvbiA9IHJlcXVlc3QuY29uZmlnLmdldG9wdGlvbigibW9uZ29fdHpfYXdhcmUiKQogICAgdHpfYXdhcmUgPSAoCiAgICAgICAgdHpfYXdhcmVfb3B0aW9uIGlmIHR6X2F3YXJlX29wdGlvbiBpcyBub3QgTm9uZSBlbHNlIGJvb2wocmVxdWVzdC5jb25maWcuZ2V0aW5pKCJtb25nb190el9hd2FyZSIpKQogICAgKQogICAgdGxzX29wdGlvbiA9IHJlcXVlc3QuY29uZmlnLmdldG9wdGlvbigibW9uZ29fdGxzIikKICAgIHRscyA9IHRsc19vcHRpb24gaWYgdGxzX29wdGlvbiBpcyBub3QgTm9uZSBlbHNlIGJvb2wocmVxdWVzdC5jb25maWcuZ2V0aW5pKCJtb25nb190bHMiKSkKCiAgICBjZmcgPSBNb25nb0NvbmZpZygKICAgICAgICBleGVjPWdldF9tb25nb19vcHRpb24oImV4ZWMiKSwKICAgICAgICBob3N0PWdldF9tb25nb19vcHRpb24oImhvc3QiKSwKICAgICAgICBwb3J0PWludChwb3J0KSBpZiBwb3J0IGVsc2UgTm9uZSwKICAgICAgICBwb3J0X3NlYXJjaF9jb3VudD1pbnQoZ2V0X21vbmdvX29wdGlvbigicG9ydF9zZWFyY2hfY291bnQiKSksCiAgICAgICAgcGFyYW1zPWdldF9tb25nb19vcHRpb24oInBhcmFtcyIpLAogICAgICAgIHR6X2F3YXJlPXR6X2F3YXJlLAogICAgICAgIHVzZXJuYW1lPWdldF9tb25nb19vcHRpb24oInVzZXJuYW1lIikgb3IgTm9uZSwKICAgICAgICBwYXNzd29yZD1nZXRfbW9uZ29fb3B0aW9uKCJwYXNzd29yZCIpIG9yIE5vbmUsCiAgICAgICAgYXV0aF9zb3VyY2U9Z2V0X21vbmdvX29wdGlvbigiYXV0aF9zb3VyY2UiKSBvciBOb25lLAogICAgICAgIHVyaT1nZXRfbW9uZ29fb3B0aW9uKCJ1cmkiKSBvciBOb25lLAogICAgICAgIGRibmFtZT1nZXRfbW9uZ29fb3B0aW9uKCJkYm5hbWUiKSwKICAgICAgICBkYnM9bGlzdChnZXRfbW9uZ29fb3B0aW9uKCJkYnMiKSksCiAgICAgICAgdGxzPXRscywKICAgICkKICAgIHJldHVybiBjZmcK","tests/test_config_precedence.py":"IiIiQ0xJIG9wdGlvbnMgb3ZlcnJpZGUgaW5pIHZhbHVlcyBmb3IgYm90aCBib29sZWFuIE1vbmdvREIgc2V0dGluZ3MuIiIiCgppbXBvcnQgcHl0ZXN0CgpweXRlc3RfcGx1Z2lucyA9IFsicHl0ZXN0ZXIiXQoKCkBweXRlc3QubWFyay5wYXJhbWV0cml6ZSgib3B0aW9uIiwgWyJ0bHMiLCAidHpfYXdhcmUiXSkKQHB5dGVzdC5tYXJrLnBhcmFtZXRyaXplKAogICAgKCJpbmlfdmFsdWUiLCAiZmxhZyIsICJleHBlY3RlZCIpLAogICAgWwogICAgICAgIChOb25lLCBOb25lLCBGYWxzZSksCiAgICAgICAgKE5vbmUsIFRydWUsIFRydWUpLAogICAgICAgIChOb25lLCBGYWxzZSwgRmFsc2UpLAogICAgICAgICgidHJ1ZSIsIE5vbmUsIFRydWUpLAogICAgICAgICgidHJ1ZSIsIFRydWUsIFRydWUpLAogICAgICAgICgidHJ1ZSIsIEZhbHNlLCBGYWxzZSksCiAgICAgICAgKCJmYWxzZSIsIE5vbmUsIEZhbHNlKSwKICAgICAgICAoImZhbHNlIiwgVHJ1ZSwgVHJ1ZSksCiAgICAgICAgKCJmYWxzZSIsIEZhbHNlLCBGYWxzZSksCiAgICBdLAopCmRlZiB0ZXN0X2Jvb2xlYW5fY29uZmlnX3ByZWNlZGVuY2UoCiAgICBweXRlc3RlcjogcHl0ZXN0LlB5dGVzdGVyLAogICAgb3B0aW9uOiBzdHIsCiAgICBpbmlfdmFsdWU6IHN0ciB8IE5vbmUsCiAgICBmbGFnOiBib29sIHwgTm9uZSwKICAgIGV4cGVjdGVkOiBib29sLAopIC0+IE5vbmU6CiAgICAiIiJBbiBleHBsaWNpdCBmYWxzZSBmbGFnIG11c3QgcmVtYWluIGRpc3RpbmN0IGZyb20gYW4gdW5zcGVjaWZpZWQgZmxhZy4iIiIKICAgIGlmIGluaV92YWx1ZSBpcyBub3QgTm9uZToKICAgICAgICBweXRlc3Rlci5tYWtlaW5pKGYiW3B5dGVzdF1cbm1vbmdvX3tvcHRpb259ID0ge2luaV92YWx1ZX1cbiIpCiAgICBweXRlc3Rlci5tYWtlcHlmaWxlKAogICAgICAgIGYiIiIKICAgICAgICBmcm9tIHB5dGVzdF9tb25nby5jb25maWcgaW1wb3J0IGdldF9jb25maWcKCiAgICAgICAgZGVmIHRlc3RfY29uZmlnKHJlcXVlc3QpOgogICAgICAgICAgICBhc3NlcnQgZ2V0X2NvbmZpZyhyZXF1ZXN0KS57b3B0aW9ufSBpcyB7ZXhwZWN0ZWR9CiAgICAgICAgIiIiCiAgICApCiAgICBhcmdzID0gW10KICAgIGlmIGZsYWcgaXMgbm90IE5vbmU6CiAgICAgICAgcHJlZml4ID0gIi0tbW9uZ28tIiBpZiBmbGFnIGVsc2UgIi0tbm8tbW9uZ28tIgogICAgICAgIGFyZ3MuYXBwZW5kKHByZWZpeCArIG9wdGlvbi5yZXBsYWNlKCJfIiwgIi0iKSkKICAgIHJlc3VsdCA9IHB5dGVzdGVyLnJ1bnB5dGVzdCgqYXJncywgIi1wIiwgInB5dGVzdF9tb25nby5wbHVnaW4iLCAiLS1kaXNhYmxlLXBsdWdpbi1hdXRvbG9hZCIpCiAgICByZXN1bHQuYXNzZXJ0X291dGNvbWVzKHBhc3NlZD0xKQo=","newsfragments/952.misc.rst":"UmVzb2x2ZSB0aGUgVExTIGFuZCB0aW1lem9uZS1hd2FyZSBzZXR0aW5ncyBiZWZvcmUgY29uc3RydWN0aW5nIE1vbmdvQ29uZmlnIGZvciByZWFkYWJpbGl0eS4K"}
+          for name,content in files.items():
+              p=Path(name)
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(base64.b64decode(content))
+          
+          PY
+          ruff format pytest_mongo/config.py tests/test_config_precedence.py
+          ruff check pytest_mongo/config.py tests/test_config_precedence.py
+      - name: Test CLI and ini precedence without mongod
+        run: |
+          python -m pytest -o addopts= -q tests/test_tz_aware.py tests/test_config_precedence.py --junitxml=precedence.xml
+          python -m build
+          git diff --check
+          sha256sum pytest_mongo/config.py tests/test_config_precedence.py newsfragments/952.misc.rst
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mongo-config-tested
+          path: |
+            pytest_mongo/config.py
+            tests/test_config_precedence.py
+            newsfragments/952.misc.rst
+            precedence.xml
